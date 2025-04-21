@@ -47,12 +47,15 @@ class Node:
                 best_children.append(child)
         return random.choice(best_children)
 
-    def backpropagate(self, result):
-        self.visits += 1
+   def backpropagate(self, result, root_player):
+    self.visits += 1
+    # Se for o jogador da raiz, soma o resultado como está
+    if self.game.current_player != root_player:
         self.wins += result
-        if self.parent is not None:
-            self.parent.backpropagate(result)
-
+    else:
+        self.wins += 1 - result  # Resultado do ponto de vista do oponente
+    if self.parent is not None:
+        self.parent.backpropagate(result, root_player)
 def monte_carlo_tree_search(game, num_simulations):
     root = Node(game)
     
@@ -118,7 +121,7 @@ def simulate(game, player):
         if not possible_moves:
             break
 
-        # 1. Tenta ganhar imediatamente
+        # Tentar ganhar imediatamente
         for move in possible_moves:
             temp_game = game.make_copy()
             temp_game.make_move(move)
@@ -126,7 +129,7 @@ def simulate(game, player):
                 game.make_move(move)
                 break
         else:
-            # 2. Tenta bloquear vitória do adversário
+            # Tentar bloquear o adversário
             for move in possible_moves:
                 temp_game = game.make_copy()
                 temp_game.make_move(move)
@@ -134,18 +137,19 @@ def simulate(game, player):
                     game.make_move(move)
                     break
             else:
-                # 3. Caso contrário, joga aleatoriamente
+                # Jogada aleatória
                 move = random.choice(possible_moves)
                 game.make_move(move)
+
         iteration += 1
 
+    # Retornar resultado claro: 1 = vitória, 0.5 = empate, 0 = derrota
     if game.winner == player:
         return 1
     elif game.winner == "Draw":
-        return 0
+        return 0.5
     else:
         return 0
-
 def train(game, iterations, save_file="training_data.pkl"):
     data = load_training_data(save_file) or {}
     print("Loaded training data.")
